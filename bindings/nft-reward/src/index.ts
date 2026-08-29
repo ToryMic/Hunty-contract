@@ -374,8 +374,8 @@ export interface Client {
 
   /**
    * Construct and simulate a admin_update_image_uris transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
-   * Batch-updates image URIs for all NFTs whose `image_uri` starts with `old_prefix`,
-   * replacing it with `new_prefix`. Useful for migrating between IPFS gateways or CDNs.
+   * Batch-updates image URIs for NFTs whose `image_uri` starts with `old_prefix`,
+   * replacing it with `new_prefix`.
    * 
    * # Authorization
    * Only the configured admin can call this function.
@@ -384,11 +384,13 @@ export interface Client {
    * * `admin` - The admin address (must match the stored admin)
    * * `old_prefix` - The prefix to match (e.g. "ipfs://oldgateway/")
    * * `new_prefix` - The replacement prefix (e.g. "ipfs://newgateway/")
+   * * `offset` - Starting index into the NFT list (0-based)
+   * * `limit` - Maximum number of NFTs to scan in this call
    * 
    * # Returns
-   * The number of NFTs whose image URIs were updated.
+   * `(updated_count, next_offset)` for this batch.
    */
-  admin_update_image_uris: ({admin, old_prefix, new_prefix}: {admin: string, old_prefix: string, new_prefix: string}, options?: MethodOptions) => Promise<AssembledTransaction<Result<u32>>>
+  admin_update_image_uris: ({admin, old_prefix, new_prefix, offset, limit}: {admin: string, old_prefix: string, new_prefix: string, offset: u32, limit: u32}, options?: MethodOptions) => Promise<AssembledTransaction<Result<[u32, u32]>>>
 
   /**
    * Construct and simulate a mint_reward_nft_from_map transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
@@ -500,7 +502,7 @@ export class Client extends ContractClient {
         set_reward_manager: this.txFromJSON<Result<void>>,
         update_nft_metadata: this.txFromJSON<Result<void>>,
         search_by_rarity_range: this.txFromJSON<Array<u64>>,
-        admin_update_image_uris: this.txFromJSON<Result<u32>>,
+        admin_update_image_uris: this.txFromJSON<Result<[u32, u32]>>,
         mint_reward_nft_from_map: this.txFromJSON<u64>
   }
 }

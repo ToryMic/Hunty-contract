@@ -11,6 +11,7 @@ impl Storage {
     const NFT_CORE_KEY: soroban_sdk::Symbol = symbol_short!("NC");
     const NFT_META_KEY: soroban_sdk::Symbol = symbol_short!("NM");
     const NFT_COUNTER_KEY: soroban_sdk::Symbol = symbol_short!("CN");
+    const NFT_LIVE_SUPPLY_KEY: soroban_sdk::Symbol = symbol_short!("CLIVE");
     const OWNER_NFT_COUNT_KEY: soroban_sdk::Symbol = symbol_short!("ONFC");
     const MAX_SUPPLY_KEY: soroban_sdk::Symbol = symbol_short!("MAXS");
     const INITIALIZED_KEY: soroban_sdk::Symbol = symbol_short!("INIT");
@@ -288,6 +289,28 @@ impl Storage {
             .persistent()
             .get(&Self::NFT_COUNTER_KEY)
             .unwrap_or(0)
+    }
+
+    pub fn increment_live_supply(env: &Env) {
+        let current = Self::get_live_supply(env);
+        env.storage()
+            .persistent()
+            .set(&Self::NFT_LIVE_SUPPLY_KEY, &(current + 1));
+    }
+
+    pub fn decrement_live_supply(env: &Env) {
+        let current = Self::get_live_supply(env);
+        env.storage()
+            .persistent()
+            .set(&Self::NFT_LIVE_SUPPLY_KEY, &current.saturating_sub(1));
+    }
+
+    pub fn get_live_supply(env: &Env) -> u64 {
+        if let Some(current) = env.storage().persistent().get(&Self::NFT_LIVE_SUPPLY_KEY) {
+            return current;
+        }
+        // Backward compatibility for already-initialized deployments before this key existed.
+        Self::get_all_nft_ids(env).len() as u64
     }
 
     pub fn get_nft_count_for_hunt(env: &Env, hunt_id: u64) -> u64 {

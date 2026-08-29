@@ -5172,8 +5172,8 @@ pub fn remove_authorized_contract(env: Env, admin: Address, contract: Address) -
 
 #### `admin_update_image_uris`
 
-Batch-updates image URIs for all NFTs whose `image_uri` starts with `old_prefix`,
-replacing it with `new_prefix`. Useful for migrating between IPFS gateways or CDNs.
+Batch-updates image URIs for NFTs whose `image_uri` starts with `old_prefix`,
+replacing it with `new_prefix`, in bounded batches.
 
 # Authorization
 Only the configured admin can call this function.
@@ -5182,14 +5182,16 @@ Only the configured admin can call this function.
 * `admin` - The admin address (must match the stored admin)
 * `old_prefix` - The prefix to match (e.g. "ipfs://oldgateway/")
 * `new_prefix` - The replacement prefix (e.g. "ipfs://newgateway/")
+* `offset` - Starting index into the NFT list (0-based)
+* `limit` - Maximum number of NFTs to scan in this call
 
 # Returns
-The number of NFTs whose image URIs were updated.
+`(updated_count, next_offset)` for this batch.
 
 **Signature:**
 
 ```rust
-pub fn admin_update_image_uris(env: Env, admin: Address, old_prefix: String, new_prefix: String) -> Result<u32, crate::errors::NftErrorCode>
+pub fn admin_update_image_uris(env: Env, admin: Address, old_prefix: String, new_prefix: String, offset: u32, limit: u32) -> Result<(u32, u32), crate::errors::NftErrorCode>
 ```
 
 **Parameters:**
@@ -5198,8 +5200,10 @@ pub fn admin_update_image_uris(env: Env, admin: Address, old_prefix: String, new
 - `admin: Address`
 - `old_prefix: String`
 - `new_prefix: String`
+- `offset: u32`
+- `limit: u32`
 
-**Returns:** `Result<u32, crate::errors::NftErrorCode>`
+**Returns:** `Result<(u32, u32), crate::errors::NftErrorCode>`
 
 **Error type:** `NftErrorCode`
 
